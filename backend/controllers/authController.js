@@ -1,0 +1,56 @@
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
+const signToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
+};
+
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(400).json({ message: 'User already exists' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Automatically assign a random manager if employee for demo purposes
+    let managerId = null;
+    if (role === 'employee') {
+      const manager = await User.findOne({ role: 'manager' });
+      if (manager) managerId = manager._id;
+    }
+
+    const user = await User.create({ name, email, password: hashedPassword, role, managerId });
+    const token = signToken(user._id, user.role);
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
+
+    const token = signToken(user._id, user.role);
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
