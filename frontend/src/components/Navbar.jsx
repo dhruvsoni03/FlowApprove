@@ -15,7 +15,7 @@ const Navbar = () => {
     fetchNotifications();
     
     // Setup Socket.io
-    const socket = io('http://localhost:5000');
+    const socket = io('https://flowapprove-y2ye.onrender.com');
     if (user) {
       socket.emit('join', user.id);
       

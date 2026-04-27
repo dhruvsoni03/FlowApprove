@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:5000/api' });
+const api = axios.create({ baseURL: 'https://flowapprove-y2ye.onrender.com/api' });
 
 export const useAuthStore = create((set) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
